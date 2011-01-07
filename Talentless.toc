@@ -1,0 +1,8 @@
+## Interface: 40000
+## Author: p3lim
+## Version: Alpha
+## Title: Talentless
+## Notes: Not what the name is implying
+## SavedVariablesPerCharacter: TalentlessDB
+
+Talentless.lua

@@ -1,6 +1,6 @@
 ## Interface: 40000
 ## Author: p3lim
-## Version: Alpha
+## Version: 40000.1-Beta
 ## Title: Talentless
 ## Notes: Not what the name is implying
 ## SavedVariablesPerCharacter: TalentlessDB

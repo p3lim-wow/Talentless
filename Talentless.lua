@@ -49,12 +49,7 @@ end
 function Talentless:UNIT_SPELLCAST_STOP(event)
 	self:UnregisterEvent(event)
 
-	local group
-	if(select(4, GetBuildInfo()) == 50001) then
-		group = GetActiveSpecGroup()
-	else
-		group = GetActiveTalentGroup()
-	end
+	local group = GetActiveSpecGroup()
 
 	for index = 1, GetNumEquipmentSets() do
 		local name = GetEquipmentSetInfo(index)

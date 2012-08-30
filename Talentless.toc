@@ -1,4 +1,4 @@
-## Interface: 40000
+## Interface: 50001
 ## Author: p3lim
 ## Version: @project-version@
 ## Title: Talentless

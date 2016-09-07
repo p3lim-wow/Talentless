@@ -1,8 +1,8 @@
-## Interface: 50001
+## Interface: 70000
 ## Author: p3lim
 ## Version: @project-version@
 ## Title: Talentless
-## Notes: Not what the name is implying
+## Notes: Improves the talent UI
 ## SavedVariablesPerCharacter: TalentlessDB
 
 Talentless.lua

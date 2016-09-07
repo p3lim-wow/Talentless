@@ -1,0 +1,11 @@
+<Bindings>
+	<Binding name='TALENTLESS_SPECIALIZATION' category='ADDONS' header='TALENTLESS'>
+		ToggleTalentFrame(SPECIALIZATION_TAB)
+	</Binding>
+	<Binding name='TALENTLESS_TALENTS' category='ADDONS'>
+		ToggleTalentFrame(TALENTS_TAB)
+	</Binding>
+	<Binding name='TALENTLESS_PVPTALENTS' category='ADDONS'>
+		ToggleTalentFrame(PVP_TALENTS_TAB)
+	</Binding>
+</Bindings>

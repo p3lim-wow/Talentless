@@ -2,7 +2,7 @@
 ## Author: p3lim
 ## Version: @project-version@
 ## Title: Talentless
-## Notes: Improves the talent UI
+## Notes: Improvements the talent UI and auto-equipping sets per specialization
 ## SavedVariablesPerCharacter: TalentlessDB
 
 Talentless.lua

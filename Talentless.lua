@@ -82,7 +82,10 @@ function Talentless:PLAYER_SPECIALIZATION_CHANGED()
 		for index = 1, GetNumEquipmentSets() do
 			local name = GetEquipmentSetInfo(index)
 			if(name == setName) then
-				EquipmentManager_EquipSet(name)
+				C_Timer.After(1, function()
+					EquipmentManager_EquipSet(name)
+				end)
+
 				break
 			end
 		end

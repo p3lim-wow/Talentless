@@ -1,3 +1,9 @@
+### Changes in 70000.5-Release:
+
+- Fixed: Tome/codex buttons not working properly
+- Fixed: Tome/codex "cooldown" spirals resetting constantly
+- Fixed: Equipment sometimes not being equipped properly
+
 ### Changes in 70000.4-Release:
 
 - Added: Keybindings for each individual tab in the talent window

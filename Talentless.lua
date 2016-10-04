@@ -164,9 +164,9 @@ function Talentless:UpdateItems(event)
 			else
 				Button:SetAttribute('item', 'item:' .. itemID)
 			end
-
-			Button.Count:SetText(GetItemCount(itemID))
 		end
+
+		Button.Count:SetText(GetItemCount(itemID))
 	end
 
 	if(event) then

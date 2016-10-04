@@ -1,3 +1,7 @@
+### Changes in 70000.6-Release:
+
+- Fixed: Tome/codex item count not properly working for lower-level players
+
 ### Changes in 70000.5-Release:
 
 - Fixed: Tome/codex buttons not working properly

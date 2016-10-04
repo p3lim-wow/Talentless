@@ -5,14 +5,9 @@ Talentless:SetScript('OnEvent', function(self, event, ...)
 	self[event](self, event, ...)
 end)
 
-local inferiorItemLevels = {
-	[141446] = 109,
-	[141333] = 100,
-}
-
-local inferiorItemIDs = {
-	[141446] = 141640, -- Tome
-	[141333] = 141641, -- Codex
+local talentItems = {
+	{141640, 141446}, -- Tomes
+	{141641, 141333}, -- Codexes
 }
 
 function Talentless:ADDON_LOADED(event, addon)
@@ -64,15 +59,25 @@ function Talentless:ADDON_LOADED(event, addon)
 		end
 	end
 
-	local Tome = self:CreateItemButton(141446, 134915)
+	local Tome = self:CreateItemButton(1, 134915)
 	Tome:SetPoint('TOPRIGHT', PlayerTalentFrame, -10, -25)
 
-	local Codex = self:CreateItemButton(141333, 1495827)
+	local Codex = self:CreateItemButton(2, 1495827)
 	Codex:SetPoint('RIGHT', Tome, 'LEFT', -6, 0)
 
+	local playerLevel = UnitLevel('player')
+	Tome.highLevel = playerLevel > 109
+	Codex.highLevel = playerLevel > 100
+
+	if(playerLevel < 110 and not (IsTrialAccount() or IsVeteranTrialAccount())) then
+		self:RegisterEvent('PLAYER_LEVEL_UP')
+	end
+
 	self:UnregisterEvent(event)
-	self:RegisterEvent('BAG_UPDATE_DELAYED')
 	self:RegisterUnitEvent('UNIT_AURA', 'player')
+	self:RegisterEvent('BAG_UPDATE_DELAYED')
+
+	self:UpdateItems()
 end
 
 function Talentless:PLAYER_SPECIALIZATION_CHANGED()
@@ -98,28 +103,80 @@ function Talentless:PLAYER_SPECIALIZATION_CHANGED()
 	end
 end
 
+function Talentless:PLAYER_LEVEL_UP(event, newLevel)
+	local change
+	if(level == 101) then
+		Codex.highLevel = true
+		change = true
+	elseif(level == 110) then
+		Tome.highLevel = true
+		change = true
+
+		self:UnregisterEvent(event)
+	end
+
+	if(change) then
+		-- update buttons
+		if(InCombatLockdown()) then
+			self:RegisterEvent('PLAYER_REGEN_ENABLED')
+		else
+			self:PLAYER_REGEN_ENABLED()
+		end
+	end
+end
+
+function Talentless:GetTalentItemID(slotID)
+	local itemID
+	if(self.itemButtons[slotID].highLevel) then
+		itemID = talentItems[slotID][2]
+	else
+		for _, talentItemID in next, talentItems[slotID] do
+			if(GetItemCount(itemID) > 0) then
+				itemID = talentItemID
+				break
+			end
+		end
+
+		if(not itemID) then
+			itemID = talentItems[slotID][1]
+		end
+	end
+
+	return itemID
+end
+
+function Talentless:UpdateItems(event)
+	for slotID, Button in next, self.itemButtons do
+		local itemID = self:GetTalentItemID(slotID)
+		if(Button.itemID ~= itemID) then
+			Button.itemID = itemID
+
+			local itemName = GetItemInfo(itemID)
+			if(not itemName) then
+				Button.itemName = nil
+				Button:RegisterEvent('GET_ITEM_INFO_RECEIVED')
+			else
+				Button.itemName = itemName
+			end
+
+			if(InCombatLockdown()) then
+				Button:RegisterEvent('PLAYER_REGEN_ENABLED')
+			else
+				Button:SetAttribute('item', 'item:' .. itemID)
+			end
+
+			Button.Count:SetText(GetItemCount(itemID))
+		end
+	end
+
+	if(event) then
+		self:UNIT_AURA()
+	end
+end
+
 function Talentless:BAG_UPDATE_DELAYED(event)
-	if(not self:IsShown()) then
-		return
-	end
-
-	local inferiorItem
-	for itemID, Button in next, self.itemButtons do
-		local count = GetItemCount(itemID)
-		if(count == 0 and UnitLevel('player') <= inferiorItemLevels[itemID]) then
-			itemID = inferiorItemIDs[itemID]
-			count = GetItemCount(itemID)
-		end
-
-		if(count > 0 and itemID ~= Button:GetID()) then
-			inferiorItem = true
-		end
-
-		Button.Count:SetText(count)
-	end
-
-	if(not event) then
-		self:UpdateItems(nil, nil, inferiorItem)
+	if(self:IsShown()) then
+		self:UpdateItems(event)
 	end
 end
 
@@ -129,50 +186,27 @@ function Talentless:UNIT_AURA()
 	end
 
 	for _, Button in next, self.itemButtons do
-		local exists, _, _, _, _, _, expiration = UnitAura('player', Button.buffName)
-		if(exists) then
-			if(expiration > 0) then
-				local time = GetTime()
-				Button.Cooldown:SetCooldown(time, expiration - time)
-			end
+		local itemName = Button.itemName
+		if(itemName) then
+			local exists, _, _, _, _, _, expiration = UnitAura('player', itemName)
+			if(exists) then
+				if(expiration > 0) then
+					local time = GetTime()
+					Button.Cooldown:SetCooldown(time, expiration - time)
+				end
 
-			ActionButton_ShowOverlayGlow(Button)
-		else
-			ActionButton_HideOverlayGlow(Button)
-			Button.Cooldown:SetCooldown(0, 0)
-		end
-	end
-end
-
-function Talentless:UpdateItems(event, _, inferiorUpdate)
-	for itemID, Button in next, self.itemButtons do
-		if(inferiorUpdate) then
-			itemID = inferiorItemIDs[itemID]
-		end
-
-		if(not Button:GetID() or itemID ~= Button:GetID()) then
-			local name = GetItemInfo(itemID)
-			if(not name) then
-				return self:RegisterEvent('GET_ITEM_INFO_RECEIVED')
+				ActionButton_ShowOverlayGlow(Button)
 			else
-				Button.buffName = name
-				Button:SetID(itemID)
-				Button:SetAttribute('item', 'item:' .. itemID)
+				ActionButton_HideOverlayGlow(Button)
+				Button.Cooldown:SetCooldown(0, 0)
 			end
 		end
 	end
-
-	if(event) then
-		self:UnregisterEvent(event)
-	end
-
-	self:UNIT_AURA()
 end
-Talentless.GET_ITEM_INFO_RECEIVED = Talentless.UpdateItems
 
 function Talentless:OnShow()
 	-- Update all the things
-	Talentless:BAG_UPDATE_DELAYED()
+	Talentless:UpdateItems()
 end
 
 local lastClickedSpec
@@ -279,16 +313,31 @@ function Talentless:CreateSpecButton(index, texture)
 	return Button
 end
 
+local function OnItemEvent(self, event)
+	if(event == 'PLAYER_REGEN_ENABLED') then
+		self:SetAttribute('item', 'item:' .. self.itemID)
+		self:UnregisterEvent(event)
+	else
+		local itemName = GetItemInfo(self.itemID)
+		if(itemName) then
+			self.itemName = itemName
+			self:UnregisterEvent(event)
+			Talentless:UNIT_AURA()
+		end
+	end
+end
+
 local function OnItemEnter(self)
 	GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
-	GameTooltip:SetItemByID(self:GetID())
+	GameTooltip:SetItemByID(self.itemID)
 	GameTooltip:Show()
 end
 
-function Talentless:CreateItemButton(itemID, texture)
+function Talentless:CreateItemButton(slotID, texture)
 	local Button = CreateFrame('Button', '$parentItemButton' .. #self.itemButtons + 1, self, 'SecureActionButtonTemplate, ActionBarButtonSpellActivationAlert')
 	Button:SetSize(34, 34)
 	Button:SetAttribute('type', 'item')
+	Button:SetScript('OnEvent', OnItemEvent)
 	Button:SetScript('OnEnter', OnItemEnter)
 	Button:SetScript('OnLeave', GameTooltip_Hide)
 
@@ -315,7 +364,7 @@ function Talentless:CreateItemButton(itemID, texture)
 	Cooldown:SetAllPoints()
 	Button.Cooldown = Cooldown
 
-	self.itemButtons[itemID] = Button
+	self.itemButtons[slotID] = Button
 	return Button
 end
 

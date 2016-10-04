@@ -1,6 +1,5 @@
 local Talentless = CreateFrame('Frame', (...), UIParent, 'UIDropDownMenuTemplate')
 Talentless:RegisterEvent('ADDON_LOADED')
-Talentless:RegisterUnitEvent('PLAYER_SPECIALIZATION_CHANGED', 'player')
 Talentless:SetScript('OnEvent', function(self, event, ...)
 	self[event](self, event, ...)
 end)
@@ -75,30 +74,31 @@ function Talentless:ADDON_LOADED(event, addon)
 
 	self:UnregisterEvent(event)
 	self:RegisterUnitEvent('UNIT_AURA', 'player')
+	self:RegisterUnitEvent('UNIT_SPELLCAST_SUCCEEDED', 'player')
 	self:RegisterEvent('BAG_UPDATE_DELAYED')
 
 	self:UpdateItems()
 end
 
-function Talentless:PLAYER_SPECIALIZATION_CHANGED()
-	local spec = GetSpecialization()
-	local setName = TalentlessDB[spec]
-	if(setName) then
-		for index = 1, GetNumEquipmentSets() do
-			local name = GetEquipmentSetInfo(index)
-			if(name == setName) then
-				C_Timer.After(1, function()
+local SPECIALIZATION_CHANGE_SPELL = 200749
+function Talentless:UNIT_SPELLCAST_SUCCEEDED(event, _, _, _, _, spellID)
+	if(spellID == SPECIALIZATION_CHANGE_SPELL) then
+		local spec = GetSpecialization()
+		local setName = TalentlessDB[spec]
+		if(setName) then
+			for index = 1, GetNumEquipmentSets() do
+				local name = GetEquipmentSetInfo(index)
+				if(name == setName) then
 					EquipmentManager_EquipSet(name)
-				end)
-
-				break
+					break
+				end
 			end
 		end
-	end
 
-	if(self.specButtons) then
-		for index, Button in next, self.specButtons do
-			Button:SetChecked(index == spec)
+		if(self.specButtons) then
+			for index, Button in next, self.specButtons do
+				Button:SetChecked(index == spec)
+			end
 		end
 	end
 end

@@ -39,7 +39,7 @@ function Talentless:ADDON_LOADED(event, addon)
 
 	local spec = GetSpecialization()
 	for specIndex = 1, GetNumSpecializations() do
-		local Button = self:CreateButton(specIndex, select(4, GetSpecializationInfo(specIndex)))
+		local Button = self:CreateSpecButton(specIndex, select(4, GetSpecializationInfo(specIndex)))
 		Button:SetChecked(specIndex == spec)
 
 		if(specIndex == 1) then
@@ -64,10 +64,10 @@ function Talentless:ADDON_LOADED(event, addon)
 		end
 	end
 
-	local Tome = self:CreateItem(141446, 134915)
+	local Tome = self:CreateItemButton(141446, 134915)
 	Tome:SetPoint('TOPRIGHT', PlayerTalentFrame, -10, -25)
 
-	local Codex = self:CreateItem(141333, 1495827)
+	local Codex = self:CreateItemButton(141333, 1495827)
 	Codex:SetPoint('RIGHT', Tome, 'LEFT', -6, 0)
 
 	self:UnregisterEvent(event)
@@ -233,7 +233,7 @@ local function OnSpecEnter(self)
 	GameTooltip:Show()
 end
 
-function Talentless:CreateButton(index, texture)
+function Talentless:CreateSpecButton(index, texture)
 	local Button = CreateFrame('CheckButton', '$parentSpecButton' .. index, self)
 	Button:SetSize(34, 34)
 	Button:SetScript('OnClick', OnSpecClick)
@@ -285,7 +285,7 @@ local function OnItemEnter(self)
 	GameTooltip:Show()
 end
 
-function Talentless:CreateItem(itemID, texture)
+function Talentless:CreateItemButton(itemID, texture)
 	local Button = CreateFrame('Button', '$parentItemButton' .. #self.itemButtons + 1, self, 'SecureActionButtonTemplate, ActionBarButtonSpellActivationAlert')
 	Button:SetSize(34, 34)
 	Button:SetAttribute('type', 'item')

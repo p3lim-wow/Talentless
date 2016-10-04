@@ -188,11 +188,10 @@ function Talentless:UNIT_AURA()
 	for _, Button in next, self.itemButtons do
 		local itemName = Button.itemName
 		if(itemName) then
-			local exists, _, _, _, _, _, expiration = UnitAura('player', itemName)
+			local exists, _, _, _, _, duration, expiration = UnitAura('player', itemName)
 			if(exists) then
 				if(expiration > 0) then
-					local time = GetTime()
-					Button.Cooldown:SetCooldown(time, expiration - time)
+					Button.Cooldown:SetCooldown(expiration - duration, duration)
 				end
 
 				ActionButton_ShowOverlayGlow(Button)

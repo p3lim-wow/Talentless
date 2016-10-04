@@ -131,7 +131,7 @@ function Talentless:GetTalentItemID(slotID)
 		itemID = talentItems[slotID][2]
 	else
 		for _, talentItemID in next, talentItems[slotID] do
-			if(GetItemCount(itemID) > 0) then
+			if(GetItemCount(talentItemID) > 0) then
 				itemID = talentItemID
 				break
 			end

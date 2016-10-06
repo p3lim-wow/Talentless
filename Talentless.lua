@@ -1,4 +1,4 @@
-local Talentless = CreateFrame('Frame', (...), UIParent, 'UIDropDownMenuTemplate')
+local Talentless = CreateFrame('Frame', (...), UIParent, 'Talentless_UIDropDownMenuTemplate')
 Talentless:RegisterEvent('ADDON_LOADED')
 Talentless:SetScript('OnEvent', function(self, event, ...)
 	self[event](self, event, ...)
@@ -230,20 +230,20 @@ end
 
 local UNKNOWN_ICON = [[Interface\Icons\INV_MISC_QUESTIONMARK]]
 function Talentless:InitializeMenu()
-	local info = UIDropDownMenu_CreateInfo()
+	local info = Talentless_UIDropDownMenu_CreateInfo()
 	for index = 1, GetNumEquipmentSets() do
 		local name, icon = GetEquipmentSetInfo(index)
 		info.text = string.format('|T%s:18|t %s', icon or UNKNOWN_ICON, name)
 		info.func = OnMenuClick
 		info.arg1 = name
 		info.checked = TalentlessDB[lastClickedSpec] == name
-		UIDropDownMenu_AddButton(info)
+		Talentless_UIDropDownMenu_AddButton(info)
 	end
 
 	info.text = KEY_NUMLOCK_MAC
 	info.arg1 = nil
 	info.checked = false
-	UIDropDownMenu_AddButton(info)
+	Talentless_UIDropDownMenu_AddButton(info)
 end
 
 local function OnSpecClick(self, button)
@@ -252,8 +252,8 @@ local function OnSpecClick(self, button)
 
 	if(button == 'RightButton') then
 		lastClickedSpec = specIndex
-		CloseDropDownMenus()
-		ToggleDropDownMenu(1, nil, Talentless, self, -self:GetWidth(), -self:GetHeight())
+		Talentless_CloseDropDownMenus()
+		Talentless_ToggleDropDownMenu(1, nil, Talentless, self, -self:GetWidth(), -self:GetHeight())
 	else
 		Talentless:ChangeSpec(specIndex)
 	end

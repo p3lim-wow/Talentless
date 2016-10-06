@@ -8,4 +8,17 @@
 	<Binding name='TALENTLESS_PVPTALENTS' category='ADDONS'>
 		ToggleTalentFrame(PVP_TALENTS_TAB)
 	</Binding>
+
+	<Binding name='TALENTLESS_SWAP_1' category='ADDONS' header='TALENTLESS_BLANK'>
+		Talentless:ChangeSpec(1)
+	</Binding>
+	<Binding name='TALENTLESS_SWAP_2' category='ADDONS'>
+		Talentless:ChangeSpec(2)
+	</Binding>
+	<Binding name='TALENTLESS_SWAP_3' category='ADDONS'>
+		Talentless:ChangeSpec(3)
+	</Binding>
+	<Binding name='TALENTLESS_SWAP_4' category='ADDONS'>
+		Talentless:ChangeSpec(4)
+	</Binding>
 </Bindings>

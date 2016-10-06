@@ -248,15 +248,14 @@ end
 
 local function OnSpecClick(self, button)
 	local specIndex = self:GetID()
-	local differentSpec = GetSpecialization() ~= specIndex
-	self:SetChecked(not differentSpec)
+	self:SetChecked(GetSpecialization() == specIndex)
 
 	if(button == 'RightButton') then
 		lastClickedSpec = specIndex
 		CloseDropDownMenus()
 		ToggleDropDownMenu(1, nil, Talentless, self, -self:GetWidth(), -self:GetHeight())
-	elseif(not InCombatLockdown() and differentSpec) then
-		SetSpecialization(specIndex)
+	else
+		Talentless:ChangeSpec(specIndex)
 	end
 end
 
@@ -367,9 +366,26 @@ function Talentless:CreateItemButton(slotID, texture)
 	return Button
 end
 
+function Talentless:ChangeSpec(specIndex)
+	if(GetNumSpecializations() >= specIndex) then
+		if(InCombatLockdown()) then
+			UIErrorsFrame:TryDisplayMessage(50, ERR_AFFECTING_COMBAT, 1, 0.1, 0.1)
+		elseif(GetSpecialization() ~= specIndex) then
+			SetSpecialization(specIndex)
+		end
+	end
+end
+
 -- Binding UI global names
 local TOGGLE = string.gsub(BINDING_NAME_TOGGLEABILITYBOOK, ABILITIES, '')
-BINDING_HEADER_TALENTLESS = ...
+BINDING_HEADER_TALENTLESS = (...)
 BINDING_NAME_TALENTLESS_SPECIALIZATION = TOGGLE .. SPECIALIZATION
 BINDING_NAME_TALENTLESS_TALENTS = TOGGLE .. TALENTS
 BINDING_NAME_TALENTLESS_PVPTALENTS = TOGGLE .. PVP_TALENTS
+
+local specText = string.format('%s %s ', TALENT_SPEC_ACTIVATE, string.lower(SPECIALIZATION))
+BINDING_HEADER_TALENTLESS_BLANK = ''
+BINDING_NAME_TALENTLESS_SWAP_1 = specText .. 1
+BINDING_NAME_TALENTLESS_SWAP_2 = specText .. 2
+BINDING_NAME_TALENTLESS_SWAP_3 = specText .. 3
+BINDING_NAME_TALENTLESS_SWAP_4 = specText .. 4

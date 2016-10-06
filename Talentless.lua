@@ -1,5 +1,6 @@
 local Talentless = CreateFrame('Frame', (...), UIParent, 'Talentless_UIDropDownMenuTemplate')
 Talentless:RegisterEvent('ADDON_LOADED')
+Talentless:RegisterUnitEvent('UNIT_SPELLCAST_SUCCEEDED', 'player')
 Talentless:SetScript('OnEvent', function(self, event, ...)
 	self[event](self, event, ...)
 end)
@@ -10,11 +11,12 @@ local talentItems = {
 }
 
 function Talentless:ADDON_LOADED(event, addon)
-	if(addon ~= 'Blizzard_TalentUI') then
+	if(addon == self:GetName()) then
+		TalentlessDB = TalentlessDB or {}
+		return
+	elseif(addon ~= 'Blizzard_TalentUI') then
 		return
 	end
-
-	TalentlessDB = TalentlessDB or {}
 
 	self:SetParent(PlayerTalentFrameTalents)
 
@@ -74,7 +76,6 @@ function Talentless:ADDON_LOADED(event, addon)
 
 	self:UnregisterEvent(event)
 	self:RegisterUnitEvent('UNIT_AURA', 'player')
-	self:RegisterUnitEvent('UNIT_SPELLCAST_SUCCEEDED', 'player')
 	self:RegisterEvent('BAG_UPDATE_DELAYED')
 
 	self:UpdateItems()

@@ -43,21 +43,6 @@ function Talentless:ADDON_LOADED(event, addon)
 		else
 			Button:SetPoint('LEFT', self.specButtons[specIndex - 1], 'RIGHT', 6, 0)
 		end
-
-		local EquipmentIcon = Button.EquipmentIcon
-		if(TalentlessDB[specIndex]) then
-			EquipmentIcon:GetParent():Show()
-
-			for equipmentIndex = 1, GetNumEquipmentSets() do
-				local setName, icon = GetEquipmentSetInfo(equipmentIndex)
-				if(setName == TalentlessDB[specIndex]) then
-					EquipmentIcon:SetTexture(icon)
-					break
-				end
-			end
-		else
-			EquipmentIcon:GetParent():Hide()
-		end
 	end
 
 	local Tome = self:CreateItemButton(1, 134915)
@@ -77,8 +62,31 @@ function Talentless:ADDON_LOADED(event, addon)
 	self:UnregisterEvent(event)
 	self:RegisterUnitEvent('UNIT_AURA', 'player')
 	self:RegisterEvent('BAG_UPDATE_DELAYED')
+	self:RegisterEvent('EQUIPMENT_SETS_CHANGED')
 
+	self:EQUIPMENT_SETS_CHANGED()
 	self:UpdateItems()
+end
+
+function Talentless:EQUIPMENT_SETS_CHANGED()
+	for specIndex, Button in next, self.specButtons do
+		local EquipmentIcon = Button.EquipmentIcon
+		local setExists
+
+		local savedName = TalentlessDB[specIndex]
+		if(savedName) then
+			for index = 1, GetNumEquipmentSets() do
+				local name, icon = GetEquipmentSetInfo(index)
+				if(name == savedName) then
+					setExists = true
+					EquipmentIcon:SetTexture(icon)
+					break
+				end
+			end
+		end
+
+		EquipmentIcon:GetParent():SetShown(setExists)
+	end
 end
 
 local SPECIALIZATION_CHANGE_SPELL = 200749
@@ -212,21 +220,7 @@ end
 local lastClickedSpec
 local function OnMenuClick(self, name)
 	TalentlessDB[lastClickedSpec] = name
-
-	local EquipmentIcon = Talentless.specButtons[lastClickedSpec].EquipmentIcon
-	if(name) then
-		EquipmentIcon:GetParent():Show()
-
-		for index = 1, GetNumEquipmentSets() do
-			local setName, icon = GetEquipmentSetInfo(index)
-			if(setName == name) then
-				EquipmentIcon:SetTexture(icon)
-				break
-			end
-		end
-	else
-		EquipmentIcon:GetParent():Hide()
-	end
+	Talentless:EQUIPMENT_SETS_CHANGED()
 end
 
 local UNKNOWN_ICON = [[Interface\Icons\INV_MISC_QUESTIONMARK]]

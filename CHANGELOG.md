@@ -1,3 +1,11 @@
+### Changes in 70000.7-Release:
+
+- Added: Keybindings for swapping specs
+- Fixed: Dropdown menu taints
+- Fixed: Equipment set icon not showing the '?' icon
+- Fixed: Equipment set icon not hiding when there is no saved set
+- Fixed: Equipment set icon not updating when changing/deleting a set
+
 ### Changes in 70000.6-Release:
 
 - Fixed: Tome/codex item count not properly working for lower-level players

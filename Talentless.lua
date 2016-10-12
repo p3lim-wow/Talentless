@@ -5,6 +5,8 @@ Talentless:SetScript('OnEvent', function(self, event, ...)
 	self[event](self, event, ...)
 end)
 
+local UNKNOWN_ICON = [[Interface\Icons\INV_MISC_QUESTIONMARK]]
+
 local talentItems = {
 	{141640, 141446}, -- Tomes
 	{141641, 141333}, -- Codexes
@@ -79,7 +81,7 @@ function Talentless:EQUIPMENT_SETS_CHANGED()
 				local name, icon = GetEquipmentSetInfo(index)
 				if(name == savedName) then
 					setExists = true
-					EquipmentIcon:SetTexture(icon)
+					EquipmentIcon:SetTexture(icon or UNKNOWN_ICON)
 					break
 				end
 			end
@@ -223,7 +225,6 @@ local function OnMenuClick(self, name)
 	Talentless:EQUIPMENT_SETS_CHANGED()
 end
 
-local UNKNOWN_ICON = [[Interface\Icons\INV_MISC_QUESTIONMARK]]
 function Talentless:InitializeMenu()
 	local info = Talentless_UIDropDownMenu_CreateInfo()
 	for index = 1, GetNumEquipmentSets() do

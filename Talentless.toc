@@ -7,4 +7,5 @@
 
 UIDropDownMenu\UIDropDownMenu.xml
 
+EquipmentManager.lua
 Talentless.lua

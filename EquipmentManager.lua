@@ -10,8 +10,8 @@ function EquipmentManager_EquipSet(name)
 	-- different slotted legendaries beyond the 1/2 equipped limit
 	local locations = GetEquipmentSetLocations(name)
 	for inventoryID, location in next, locations do
-		local rarity = select(13, EquipmentManager_GetItemInfoByLocation(location))
-		if(rarity and rarity == 5) then
+		local itemLink = GetInventoryItemLink('player', inventoryID)
+		if(itemLink and select(3, GetItemInfo(itemLink)) == 5) then
 			-- legendary item found, manually replace it with the item from the new set
 			local action = EquipmentManager_EquipItemByLocation(location, inventoryID)
 			if(action) then

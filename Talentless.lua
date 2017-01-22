@@ -254,8 +254,8 @@ function Talentless:CreateItemButtons()
 			141333, -- Codex of the Tranquil Mind
 		}, {
 			141640, -- Tome of the Clear Mind
-			141446, -- Tome of the Tranquil Mind
 			143785, -- Tome of the Tranquil Mind (BoP version)
+			141446, -- Tome of the Tranquil Mind
 		}
 	}
 

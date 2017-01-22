@@ -1,164 +1,369 @@
 local Talentless = CreateFrame('Frame', (...), UIParent, 'Talentless_UIDropDownMenuTemplate')
 Talentless:RegisterEvent('ADDON_LOADED')
-Talentless:RegisterUnitEvent('UNIT_SPELLCAST_SUCCEEDED', 'player')
+Talentless:RegisterUnitEvent('PLAYER_SPECIALIZATION_CHANGED', 'player')
 Talentless:SetScript('OnEvent', function(self, event, ...)
-	self[event](self, event, ...)
+	self[event](self, ...)
 end)
 
-local UNKNOWN_ICON = [[Interface\Icons\INV_MISC_QUESTIONMARK]]
+local PTR = select(4, GetBuildInfo()) == 70200
 
-local talentItems = {
-	{141640, 141446}, -- Tomes
-	{141641, 141333}, -- Codexes
-}
+function Talentless:ADDON_LOADED(addon)
+	if(addon == 'Blizzard_TalentUI') then
+		self:SetParent(PlayerTalentFrameTalents)
 
-function Talentless:ADDON_LOADED(event, addon)
-	if(addon == self:GetName()) then
-		TalentlessDB = TalentlessDB or {}
-		return
-	elseif(addon ~= 'Blizzard_TalentUI') then
-		return
-	end
+		PlayerTalentFrame:HookScript('OnShow', self.OnShow)
+		PlayerTalentFrame:HookScript('OnHide', self.OnHide)
 
-	self:SetParent(PlayerTalentFrameTalents)
+		PlayerTalentFrameTalentsTutorialButton:Hide()
+		PlayerTalentFrameTalentsTutorialButton.Show = function() end
+		PlayerTalentFrameTalents.unspentText:ClearAllPoints()
+		PlayerTalentFrameTalents.unspentText:SetPoint('TOP', 0, 24)
 
-	self.itemButtons = {}
-	self.specButtons = {}
+		self:CreateItemButtons()
+		self:CreateSpecButtons()
+		self:CreateDropdown()
 
-	self.relativePoint = 'TOPRIGHT'
-	self.displayMode = 'MENU'
-	self.initialize = self.InitializeMenu
+		if(UnitLevel('player') < 110 and not (IsTrialAccount() or IsVeteranTrialAccount())) then
+			self:RegisterEvent('PLAYER_LEVEL_UP')
+		end
 
-	PlayerTalentFrame:HookScript('OnShow', self.OnShow)
-	PlayerTalentFrameTalentsTutorialButton:Hide()
-	PlayerTalentFrameTalentsTutorialButton.Show = function() end
-	PlayerTalentFrameTalents.unspentText:ClearAllPoints()
-	PlayerTalentFrameTalents.unspentText:SetPoint('TOP', 0, 24)
-
-	local spec = GetSpecialization()
-	for specIndex = 1, GetNumSpecializations() do
-		local Button = self:CreateSpecButton(specIndex, select(4, GetSpecializationInfo(specIndex)))
-		Button:SetChecked(specIndex == spec)
-
-		if(specIndex == 1) then
-			Button:SetPoint('TOPLEFT', PlayerTalentFrame, 60, -25)
-		else
-			Button:SetPoint('LEFT', self.specButtons[specIndex - 1], 'RIGHT', 6, 0)
+		self:UnregisterEvent('ADDON_LOADED')
+		self:OnShow()
+	elseif(addon == self:GetName()) then
+		if(not PTR) then
+			TalentlessDB = TalentlessDB or {}
 		end
 	end
+end
 
-	local Tome = self:CreateItemButton(1, 134915)
-	Tome:SetPoint('TOPRIGHT', PlayerTalentFrame, -10, -25)
-
-	local Codex = self:CreateItemButton(2, 1495827)
-	Codex:SetPoint('RIGHT', Tome, 'LEFT', -6, 0)
-
-	local playerLevel = UnitLevel('player')
-	Tome.highLevel = playerLevel > 109
-	Codex.highLevel = playerLevel > 100
-
-	if(playerLevel < 110 and not (IsTrialAccount() or IsVeteranTrialAccount())) then
-		self:RegisterEvent('PLAYER_LEVEL_UP')
+function Talentless:PLAYER_LEVEL_UP(level)
+	if(level == 101) then
+		self.Items[1].items[1] = nil
+	elseif(level == 110) then
+		self.Items[2].items[1] = nil
+		self:UnregisterEvent('PLAYER_LEVEL_UP')
 	end
 
-	self:UnregisterEvent(event)
-	self:RegisterUnitEvent('UNIT_AURA', 'player')
-	self:RegisterEvent('BAG_UPDATE_DELAYED')
-	self:RegisterEvent('EQUIPMENT_SETS_CHANGED')
+	if(self:IsShown()) then
+		self:UpdateItems()
+	end
+end
 
-	self:EQUIPMENT_SETS_CHANGED()
+function Talentless:UNIT_AURA()
+	if(self:IsShown()) then
+		for _, Button in next, self.Items do
+			local itemName = Button.itemName
+			if(itemName) then
+				local exists, _, _, _, _, duration, expiration = UnitAura('player', itemName)
+				if(exists) then
+					if(expiration > 0) then
+						Button.Cooldown:SetCooldown(expiration - duration, duration)
+					end
+
+					ActionButton_ShowOverlayGlow(Button)
+				else
+					ActionButton_HideOverlayGlow(Button)
+					Button.Cooldown:SetCooldown(0, 0)
+				end
+			end
+		end
+	end
+end
+
+function Talentless:BAG_UPDATE_DELAYED()
 	self:UpdateItems()
 end
 
-function Talentless:EQUIPMENT_SETS_CHANGED()
-	for specIndex, Button in next, self.specButtons do
-		local EquipmentIcon = Button.EquipmentIcon
-		local setExists
+local lastSpec -- DEPRECATED
+function Talentless:PLAYER_SPECIALIZATION_CHANGED()
+	if(not PTR) then -- DEPRECATED
+		local spec = GetSpecialization()
+		if(lastSpec and lastSpec ~= spec) then
+			local setName = TalentlessDB[spec]
+			if(setName) then
+				for index = 1, GetNumEquipmentSets() do
+					local name = GetEquipmentSetInfo(index)
+					if(name == setName) then
+						EquipmentManager_EquipSet(name)
+						break
+					end
+				end
+			end
+		end
 
-		local savedName = TalentlessDB[specIndex]
-		if(savedName) then
+		lastSpec = spec
+	end
+
+	if(self.Specs) then
+		local spec = GetSpecialization()
+		for index, Button in next, self.Specs do
+			Button:SetChecked(index == spec)
+		end
+	end
+end
+
+function Talentless:EQUIPMENT_SETS_CHANGED()
+	if(PTR) then
+		-- wish we had API for spec > setID as well, not just setID > spec
+		for _, Button in next, self.Specs do
+			Button.Set:Hide()
+		end
+
+		for _, setID in next, C_EquipmentSet.GetEquipmentSetIDs() do
+			local Button = self.Specs[C_EquipmentSet.GetEquipmentSetAssignedSpec(setID)]
+			Button.SetIcon:SetTexture(select(2, C_EquipmentSet.GetEquipmentSetInfo(setID)) or QUESTION_MARK_ICON)
+			Button.Set:Show()
+		end
+	else
+		-- DEPRECATED
+		for index, Button in next, self.Specs do
+			local setExists
+
+			local savedName = TalentlessDB[index]
+			if(savedName) then
+				for index = 1, GetNumEquipmentSets() do
+					local name, icon = GetEquipmentSetInfo(index)
+					if(name == savedName) then
+						setExists = true
+						Button.SetIcon:SetTexture(icon or [[Interface\Icons\INV_MISC_QUESTIONMARK]])
+						break
+					end
+				end
+			end
+
+			Button.Set:SetShown(setExists)
+		end
+	end
+end
+
+function Talentless.OnShow()
+	Talentless:RegisterUnitEvent('UNIT_AURA', 'player')
+	Talentless:RegisterEvent('BAG_UPDATE_DELAYED')
+	Talentless:RegisterEvent('EQUIPMENT_SETS_CHANGED')
+	Talentless:EQUIPMENT_SETS_CHANGED()
+	Talentless:UpdateItems()
+end
+
+function Talentless.OnHide()
+	Talentless:UnregisterEvent('UNIT_AURA')
+	Talentless:UnregisterEvent('BAG_UPDATE_DELAYED')
+	Talentless:UnregisterEvent('EQUIPMENT_SETS_CHANGED')
+end
+
+function Talentless:CreateSpecButtons()
+	self.Specs = {}
+
+	local OnClick = function(self, button)
+		local index = self:GetID()
+		self:SetChecked(GetSpecialization() == index)
+
+		if(button == 'RightButton') then
+			Talentless_CloseDropDownMenus()
+			Talentless_ToggleDropDownMenu(1, index, Talentless, self, -self:GetWidth(), -self:GetHeight())
+		else
+			Talentless:SetSpecialization(index)
+		end
+	end
+
+	local OnEnter = function(self)
+		GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
+		GameTooltip:AddLine(select(2, GetSpecializationInfo(self:GetID())))
+		GameTooltip:Show()
+	end
+
+	for index = 1, GetNumSpecializations() do
+		local Button = CreateFrame('CheckButton', '$parentSpecButton' .. index, Talentless)
+		Button:SetSize(34, 34)
+		Button:SetScript('OnClick', OnClick)
+		Button:SetScript('OnEnter', OnEnter)
+		Button:SetScript('OnLeave', GameTooltip_Hide)
+		Button:SetChecked(GetSpecialization() == index)
+		Button:SetID(index)
+		Button:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
+
+		if(index == 1) then
+			Button:SetPoint('TOPLEFT', PlayerTalentFrame, 60, -25)
+		else
+			Button:SetPoint('LEFT', self.Specs[index - 1], 'RIGHT', 6, 0)
+		end
+
+		local Icon = Button:CreateTexture('$parentIcon', 'BACKGROUND')
+		Icon:SetAllPoints()
+		Icon:SetTexture(select(4, GetSpecializationInfo(index)))
+		Icon:SetTexCoord(4/64, 60/64, 4/64, 60/64)
+
+		local Border = Button:CreateTexture('$parentNormalTexture')
+		Border:SetPoint('CENTER')
+		Border:SetSize(60, 60)
+		Border:SetTexture([[Interface\Buttons\UI-Quickslot2]])
+
+		Button:SetNormalTexture(Border)
+		Button:SetPushedTexture([[Interface\Buttons\UI-Quickslot-Depress]])
+		Button:SetCheckedTexture([[Interface\Buttons\CheckButtonHilight]])
+		Button:SetHighlightTexture([[Interface\Buttons\ButtonHilight-Square]])
+
+		local Set = CreateFrame('CheckButton', '$parentSetButton', Button)
+		Set:SetPoint('BOTTOM', 0, -10)
+		Set:SetSize(18, 18)
+		Set:EnableMouse(false)
+		Set:Hide()
+		Button.Set = Set
+
+		local SetIcon = Set:CreateTexture('$parentIcon')
+		SetIcon:SetAllPoints()
+		SetIcon:SetTexCoord(4/64, 60/64, 4/64, 60/64)
+		Button.SetIcon = SetIcon
+
+		local SetBorder = Set:CreateTexture('$parentNormalTexture')
+		SetBorder:SetPoint('CENTER')
+		SetBorder:SetSize(31.76, 31.76)
+		SetBorder:SetTexture([[Interface\Buttons\UI-Quickslot2]])
+		Set:SetNormalTexture(SetBorder)
+
+		table.insert(self.Specs, Button)
+	end
+end
+
+function Talentless:CreateItemButtons()
+	self.Items = {}
+
+	local OnEnter = function(self)
+		GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
+		GameTooltip:SetItemByID(self.itemID)
+		GameTooltip:Show()
+	end
+
+	local OnEvent = function(self, event)
+		if(event == 'PLAYER_REGEN_ENABLED') then
+			self:UnregisterEvent(event)
+			self:SetAttribute('item', 'item:' .. self.itemID)
+		else
+			local itemName = GetItemInfo(self.itemID)
+			if(itemName) then
+				self.itemName = itemName
+				self:UnregisterEvent(event)
+
+				Talentless:UNIT_AURA()
+			end
+		end
+	end
+
+	local items = {
+		{
+			141641, -- Codex of the Clear Mind
+			141333, -- Codex of the Tranquil Mind
+		}, {
+			141640, -- Tome of the Clear Mind
+			141446, -- Tome of the Tranquil Mind
+		}
+	}
+
+	local playerLevel = UnitLevel('player')
+	if(playerLevel > 100) then
+		table.remove(items[1], 1)
+
+		if(playerLevel > 109) then
+			table.remove(items[2], 1)
+		end
+	end
+
+	for index, items in next, items do
+		local Button = CreateFrame('Button', '$parentItemButton' .. index, self, 'SecureActionButtonTemplate, ActionBarButtonSpellActivationAlert')
+		Button:SetPoint('TOPRIGHT', PlayerTalentFrame, -10 - (40 * (index - 1)), -25)
+		Button:SetSize(34, 34)
+		Button:SetAttribute('type', 'item')
+		Button:SetScript('OnEnter', OnEnter)
+		Button:SetScript('OnEvent', OnEvent)
+		Button:SetScript('OnLeave', GameTooltip_Hide)
+		Button.items = items
+
+		local Icon = Button:CreateTexture('$parentIcon', 'BACKGROUND')
+		Icon:SetAllPoints()
+		Icon:SetTexture(index == 1 and 134915 or 1495827)
+		Icon:SetTexCoord(4/64, 60/64, 4/64, 60/64)
+
+		local Normal = Button:CreateTexture('$parentNormalTexture')
+		Normal:SetPoint('CENTER')
+		Normal:SetSize(60, 60)
+		Normal:SetTexture([[Interface\Buttons\UI-Quickslot2]])
+
+		Button:SetNormalTexture(Normal)
+		Button:SetPushedTexture([[Interface\Buttons\UI-Quickslot-Depress]])
+		Button:SetHighlightTexture([[Interface\Buttons\ButtonHilight-Square]])
+
+		local Count = Button:CreateFontString('$parentCount', 'OVERLAY')
+		Count:SetPoint('BOTTOMLEFT', 1, 1)
+		Count:SetFont([[Fonts\FRIZQT__.ttf]], 12, 'OUTLINE')
+		Button.Count = Count
+
+		local Cooldown = CreateFrame('Cooldown', '$parentCooldown', Button, 'CooldownFrameTemplate')
+		Cooldown:SetAllPoints()
+		Button.Cooldown = Cooldown
+
+		table.insert(self.Items, Button)
+	end
+end
+
+function Talentless:CreateDropdown()
+	local OnClick = function(self, nameOrSetID, spec) -- DEPRECATED
+		if(PTR) then
+			C_EquipmentSet.AssignSpecToEquipmentSet(nameOrSetID, spec)
+		else
+			TalentlessDB[spec] = nameOrSetID
+		end
+
+		Talentless:EQUIPMENT_SETS_CHANGED()
+	end
+
+	self.relativePoint = 'TOPRIGHT'
+	self.displayMode = 'MENU'
+
+	self.initialize = function()
+		local info = Talentless_UIDropDownMenu_CreateInfo()
+
+		if(PTR) then
+			for _, setID in next, C_EquipmentSet.GetEquipmentSetIDs() do
+				local name, icon = C_EquipmentSet.GetEquipmentSetInfo(setID)
+				info.text = string.format('|T%s:18|t %s', icon or QUESTION_MARK_ICON, name)
+				info.func = OnClick
+				info.arg1 = setID
+				info.arg2 = Talentless_UIDROPDOWNMENU_MENU_VALUE
+				info.checked = C_EquipmentSet.GetEquipmentSetAssignedSpec(setID) == info.arg2
+				Talentless_UIDropDownMenu_AddButton(info)
+			end
+		else -- DEPRECATED
 			for index = 1, GetNumEquipmentSets() do
 				local name, icon = GetEquipmentSetInfo(index)
-				if(name == savedName) then
-					setExists = true
-					EquipmentIcon:SetTexture(icon or UNKNOWN_ICON)
-					break
-				end
+				info.text = string.format('|T%s:18|t %s', icon or [[Interface\Icons\INV_MISC_QUESTIONMARK]], name)
+				info.func = OnClick
+				info.arg1 = name
+				info.arg2 = Talentless_UIDROPDOWNMENU_MENU_VALUE
+				info.checked = TalentlessDB[info.arg2] == name
+				Talentless_UIDropDownMenu_AddButton(info)
 			end
 		end
 
-		EquipmentIcon:GetParent():SetShown(setExists)
+		info.text = KEY_NUMLOCK_MAC -- "Clear"
+		info.arg1 = nil
+		info.checked = false
+		Talentless_UIDropDownMenu_AddButton(info)
 	end
 end
 
-local SPECIALIZATION_CHANGE_SPELL = 200749
-function Talentless:UNIT_SPELLCAST_SUCCEEDED(event, _, _, _, _, spellID)
-	if(spellID == SPECIALIZATION_CHANGE_SPELL) then
-		local spec = GetSpecialization()
-		local setName = TalentlessDB[spec]
-		if(setName) then
-			for index = 1, GetNumEquipmentSets() do
-				local name = GetEquipmentSetInfo(index)
-				if(name == setName) then
-					EquipmentManager_EquipSet(name)
-					break
-				end
-			end
-		end
-
-		if(self.specButtons) then
-			for index, Button in next, self.specButtons do
-				Button:SetChecked(index == spec)
-			end
+function Talentless:GetAvailableItemInfo(index)
+	for _, itemID in next, self.Items[index].items do
+		local itemCount = GetItemCount(itemID)
+		if(itemCount > 0) then
+			return itemID, itemCount
 		end
 	end
+
+	return self.Items[index].items[1], 0
 end
 
-function Talentless:PLAYER_LEVEL_UP(event, newLevel)
-	local change
-	if(level == 101) then
-		Codex.highLevel = true
-		change = true
-	elseif(level == 110) then
-		Tome.highLevel = true
-		change = true
-
-		self:UnregisterEvent(event)
-	end
-
-	if(change) then
-		-- update buttons
-		if(InCombatLockdown()) then
-			self:RegisterEvent('PLAYER_REGEN_ENABLED')
-		else
-			self:PLAYER_REGEN_ENABLED()
-		end
-	end
-end
-
-function Talentless:GetTalentItemID(slotID)
-	local itemID
-	if(self.itemButtons[slotID].highLevel) then
-		itemID = talentItems[slotID][2]
-	else
-		for _, talentItemID in next, talentItems[slotID] do
-			if(GetItemCount(talentItemID) > 0) then
-				itemID = talentItemID
-				break
-			end
-		end
-
-		if(not itemID) then
-			itemID = talentItems[slotID][1]
-		end
-	end
-
-	return itemID
-end
-
-function Talentless:UpdateItems(event)
-	for slotID, Button in next, self.itemButtons do
-		local itemID = self:GetTalentItemID(slotID)
+function Talentless:UpdateItems()
+	for index, Button in next, self.Items do
+		local itemID, itemCount = self:GetAvailableItemInfo(index)
 		if(Button.itemID ~= itemID) then
 			Button.itemID = itemID
 
@@ -177,197 +382,18 @@ function Talentless:UpdateItems(event)
 			end
 		end
 
-		Button.Count:SetText(GetItemCount(itemID))
+		Button.Count:SetText(itemCount)
 	end
 
-	if(event) then
-		self:UNIT_AURA()
-	end
+	self:UNIT_AURA()
 end
 
-function Talentless:BAG_UPDATE_DELAYED(event)
-	if(self:IsShown()) then
-		self:UpdateItems(event)
-	end
-end
-
-function Talentless:UNIT_AURA()
-	if(not self:IsShown()) then
-		return
-	end
-
-	for _, Button in next, self.itemButtons do
-		local itemName = Button.itemName
-		if(itemName) then
-			local exists, _, _, _, _, duration, expiration = UnitAura('player', itemName)
-			if(exists) then
-				if(expiration > 0) then
-					Button.Cooldown:SetCooldown(expiration - duration, duration)
-				end
-
-				ActionButton_ShowOverlayGlow(Button)
-			else
-				ActionButton_HideOverlayGlow(Button)
-				Button.Cooldown:SetCooldown(0, 0)
-			end
-		end
-	end
-end
-
-function Talentless:OnShow()
-	-- Update all the things
-	Talentless:UpdateItems()
-end
-
-local lastClickedSpec
-local function OnMenuClick(self, name)
-	TalentlessDB[lastClickedSpec] = name
-	Talentless:EQUIPMENT_SETS_CHANGED()
-end
-
-function Talentless:InitializeMenu()
-	local info = Talentless_UIDropDownMenu_CreateInfo()
-	for index = 1, GetNumEquipmentSets() do
-		local name, icon = GetEquipmentSetInfo(index)
-		info.text = string.format('|T%s:18|t %s', icon or UNKNOWN_ICON, name)
-		info.func = OnMenuClick
-		info.arg1 = name
-		info.checked = TalentlessDB[lastClickedSpec] == name
-		Talentless_UIDropDownMenu_AddButton(info)
-	end
-
-	info.text = KEY_NUMLOCK_MAC
-	info.arg1 = nil
-	info.checked = false
-	Talentless_UIDropDownMenu_AddButton(info)
-end
-
-local function OnSpecClick(self, button)
-	local specIndex = self:GetID()
-	self:SetChecked(GetSpecialization() == specIndex)
-
-	if(button == 'RightButton') then
-		lastClickedSpec = specIndex
-		Talentless_CloseDropDownMenus()
-		Talentless_ToggleDropDownMenu(1, nil, Talentless, self, -self:GetWidth(), -self:GetHeight())
-	else
-		Talentless:ChangeSpec(specIndex)
-	end
-end
-
-local function OnSpecEnter(self)
-	GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
-	GameTooltip:AddLine(select(2, GetSpecializationInfo(self:GetID())))
-	GameTooltip:Show()
-end
-
-function Talentless:CreateSpecButton(index, texture)
-	local Button = CreateFrame('CheckButton', '$parentSpecButton' .. index, self)
-	Button:SetSize(34, 34)
-	Button:SetScript('OnClick', OnSpecClick)
-	Button:SetScript('OnEnter', OnSpecEnter)
-	Button:SetScript('OnLeave', GameTooltip_Hide)
-	Button:SetID(index)
-	Button:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
-
-	local Icon = Button:CreateTexture('$parentIcon', 'BACKGROUND')
-	Icon:SetAllPoints()
-	Icon:SetTexture(texture)
-	Icon:SetTexCoord(4/64, 60/64, 4/64, 60/64)
-
-	local Border = Button:CreateTexture('$parentNormalTexture')
-	Border:SetPoint('CENTER')
-	Border:SetSize(60, 60)
-	Border:SetTexture([[Interface\Buttons\UI-Quickslot2]])
-
-	Button:SetNormalTexture(Border)
-	Button:SetPushedTexture([[Interface\Buttons\UI-Quickslot-Depress]])
-	Button:SetCheckedTexture([[Interface\Buttons\CheckButtonHilight]])
-	Button:SetHighlightTexture([[Interface\Buttons\ButtonHilight-Square]])
-
-	local Equipment = CreateFrame('CheckButton', '$parentEquipmentButton', Button)
-	Equipment:SetPoint('BOTTOM', 0, -10)
-	Equipment:SetSize(18, 18)
-	Equipment:EnableMouse(false)
-	Equipment:Hide()
-
-	local EquipmentIcon = Equipment:CreateTexture('$parentIcon')
-	EquipmentIcon:SetAllPoints()
-	EquipmentIcon:SetTexCoord(4/64, 60/64, 4/64, 60/64)
-	Button.EquipmentIcon = EquipmentIcon
-
-	local EquipmentBorder = Equipment:CreateTexture('$parentNormalTexture')
-	EquipmentBorder:SetPoint('CENTER')
-	EquipmentBorder:SetSize(31.76, 31.76)
-	EquipmentBorder:SetTexture([[Interface\Buttons\UI-Quickslot2]])
-
-	Equipment:SetNormalTexture(EquipmentBorder)
-
-	self.specButtons[index] = Button
-	return Button
-end
-
-local function OnItemEvent(self, event)
-	if(event == 'PLAYER_REGEN_ENABLED') then
-		self:SetAttribute('item', 'item:' .. self.itemID)
-		self:UnregisterEvent(event)
-	else
-		local itemName = GetItemInfo(self.itemID)
-		if(itemName) then
-			self.itemName = itemName
-			self:UnregisterEvent(event)
-			Talentless:UNIT_AURA()
-		end
-	end
-end
-
-local function OnItemEnter(self)
-	GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
-	GameTooltip:SetItemByID(self.itemID)
-	GameTooltip:Show()
-end
-
-function Talentless:CreateItemButton(slotID, texture)
-	local Button = CreateFrame('Button', '$parentItemButton' .. #self.itemButtons + 1, self, 'SecureActionButtonTemplate, ActionBarButtonSpellActivationAlert')
-	Button:SetSize(34, 34)
-	Button:SetAttribute('type', 'item')
-	Button:SetScript('OnEvent', OnItemEvent)
-	Button:SetScript('OnEnter', OnItemEnter)
-	Button:SetScript('OnLeave', GameTooltip_Hide)
-
-	local Icon = Button:CreateTexture('$parentIcon', 'BACKGROUND')
-	Icon:SetAllPoints()
-	Icon:SetTexture(texture)
-	Icon:SetTexCoord(4/64, 60/64, 4/64, 60/64)
-
-	local Normal = Button:CreateTexture('$parentNormalTexture')
-	Normal:SetPoint('CENTER')
-	Normal:SetSize(60, 60)
-	Normal:SetTexture([[Interface\Buttons\UI-Quickslot2]])
-
-	Button:SetNormalTexture(Normal)
-	Button:SetPushedTexture([[Interface\Buttons\UI-Quickslot-Depress]])
-	Button:SetHighlightTexture([[Interface\Buttons\ButtonHilight-Square]])
-
-	local Count = Button:CreateFontString('$parentCount', 'OVERLAY')
-	Count:SetPoint('BOTTOMLEFT', 1, 1)
-	Count:SetFont('Fonts\\FRIZQT__.ttf', 12, 'OUTLINE')
-	Button.Count = Count
-
-	local Cooldown = CreateFrame('Cooldown', '$parentCooldown', Button, 'CooldownFrameTemplate')
-	Cooldown:SetAllPoints()
-	Button.Cooldown = Cooldown
-
-	self.itemButtons[slotID] = Button
-	return Button
-end
-
-function Talentless:ChangeSpec(specIndex)
-	if(GetNumSpecializations() >= specIndex) then
+function Talentless:SetSpecialization(index)
+	if(GetNumSpecializations() >= index) then
 		if(InCombatLockdown()) then
 			UIErrorsFrame:TryDisplayMessage(50, ERR_AFFECTING_COMBAT, 1, 0.1, 0.1)
-		elseif(GetSpecialization() ~= specIndex) then
-			SetSpecialization(specIndex)
+		elseif(GetSpecialization() ~= index) then
+			SetSpecialization(index)
 		end
 	end
 end

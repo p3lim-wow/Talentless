@@ -280,7 +280,7 @@ function Talentless:CreateItemButtons()
 
 		local Icon = Button:CreateTexture('$parentIcon', 'BACKGROUND')
 		Icon:SetAllPoints()
-		Icon:SetTexture(index == 1 and 134915 or 1495827)
+		Icon:SetTexture(index == 1 and 1495827 or 134915)
 		Icon:SetTexCoord(4/64, 60/64, 4/64, 60/64)
 
 		local Normal = Button:CreateTexture('$parentNormalTexture')

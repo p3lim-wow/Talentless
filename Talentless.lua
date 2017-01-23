@@ -38,9 +38,9 @@ end
 
 function Talentless:PLAYER_LEVEL_UP(level)
 	if(level == 101) then
-		self.Items[1].items[1] = nil
+		table.remove(self.Items[1].items, 1)
 	elseif(level == 110) then
-		self.Items[2].items[1] = nil
+		table.remove(self.Items[2].items, 1)
 		self:UnregisterEvent('PLAYER_LEVEL_UP')
 	end
 

@@ -370,6 +370,10 @@ function Talentless:SetSpecialization(index)
 	end
 end
 
+local function UpdateAssignedEquipmentSets()
+	Talentless:EQUIPMENT_SETS_CHANGED()
+end
+
 function Talentless:ADDON_LOADED(addon)
 	if(addon == 'Blizzard_TalentUI') then
 		self:SetParent(PlayerTalentFrameTalents)
@@ -385,6 +389,12 @@ function Talentless:ADDON_LOADED(addon)
 		self:CreateItemButtons()
 		self:CreateSpecButtons()
 		self:CreateDropdown()
+
+		if(PTR) then
+			-- We need an event for this
+			hooksecurefunc(C_EquipmentSet, 'AssignSpecToEquipmentSet', UpdateAssignedEquipmentSets)
+			hooksecurefunc(C_EquipmentSet, 'UnassignEquipmentSetSpec', UpdateAssignedEquipmentSets)
+		end
 
 		if(UnitLevel('player') < 110 and not (IsTrialAccount() or IsVeteranTrialAccount())) then
 			self:RegisterEvent('PLAYER_LEVEL_UP')

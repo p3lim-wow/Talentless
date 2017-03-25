@@ -1,3 +1,11 @@
+### Changes in 70100.8-Release:
+
+- Added: Support for the character-bound tomes from "In the Blink of an Eye"
+- Added: Support for the C_Equipment API in 7.2
+- Changed: Update Interface version
+- Fixed: Texture issues
+- Fixed: Inconsistencies with the codex/tome system
+
 ### Changes in 70000.7-Release:
 
 - Added: Keybindings for swapping specs

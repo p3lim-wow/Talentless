@@ -7,35 +7,6 @@ end)
 
 local PTR = select(4, GetBuildInfo()) == 70200
 
-function Talentless:ADDON_LOADED(addon)
-	if(addon == 'Blizzard_TalentUI') then
-		self:SetParent(PlayerTalentFrameTalents)
-
-		PlayerTalentFrame:HookScript('OnShow', self.OnShow)
-		PlayerTalentFrame:HookScript('OnHide', self.OnHide)
-
-		PlayerTalentFrameTalentsTutorialButton:Hide()
-		PlayerTalentFrameTalentsTutorialButton.Show = function() end
-		PlayerTalentFrameTalents.unspentText:ClearAllPoints()
-		PlayerTalentFrameTalents.unspentText:SetPoint('TOP', 0, 24)
-
-		self:CreateItemButtons()
-		self:CreateSpecButtons()
-		self:CreateDropdown()
-
-		if(UnitLevel('player') < 110 and not (IsTrialAccount() or IsVeteranTrialAccount())) then
-			self:RegisterEvent('PLAYER_LEVEL_UP')
-		end
-
-		self:UnregisterEvent('ADDON_LOADED')
-		self:OnShow()
-	elseif(addon == self:GetName()) then
-		if(not PTR) then
-			TalentlessDB = TalentlessDB or {}
-		end
-	end
-end
-
 function Talentless:PLAYER_LEVEL_UP(level)
 	if(level == 101) then
 		table.remove(self.Items[1].items, 1)
@@ -395,6 +366,35 @@ function Talentless:SetSpecialization(index)
 			UIErrorsFrame:TryDisplayMessage(50, ERR_AFFECTING_COMBAT, 1, 0.1, 0.1)
 		elseif(GetSpecialization() ~= index) then
 			SetSpecialization(index)
+		end
+	end
+end
+
+function Talentless:ADDON_LOADED(addon)
+	if(addon == 'Blizzard_TalentUI') then
+		self:SetParent(PlayerTalentFrameTalents)
+
+		PlayerTalentFrame:HookScript('OnShow', self.OnShow)
+		PlayerTalentFrame:HookScript('OnHide', self.OnHide)
+
+		PlayerTalentFrameTalentsTutorialButton:Hide()
+		PlayerTalentFrameTalentsTutorialButton.Show = function() end
+		PlayerTalentFrameTalents.unspentText:ClearAllPoints()
+		PlayerTalentFrameTalents.unspentText:SetPoint('TOP', 0, 24)
+
+		self:CreateItemButtons()
+		self:CreateSpecButtons()
+		self:CreateDropdown()
+
+		if(UnitLevel('player') < 110 and not (IsTrialAccount() or IsVeteranTrialAccount())) then
+			self:RegisterEvent('PLAYER_LEVEL_UP')
+		end
+
+		self:UnregisterEvent('ADDON_LOADED')
+		self:OnShow()
+	elseif(addon == self:GetName()) then
+		if(not PTR) then
+			TalentlessDB = TalentlessDB or {}
 		end
 	end
 end

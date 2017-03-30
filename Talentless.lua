@@ -5,8 +5,6 @@ Talentless:SetScript('OnEvent', function(self, event, ...)
 	self[event](self, ...)
 end)
 
-local PTR = select(4, GetBuildInfo()) == 70200
-
 function Talentless:PLAYER_LEVEL_UP(level)
 	if(level == 101) then
 		table.remove(self.Items[1].items, 1)
@@ -45,26 +43,7 @@ function Talentless:BAG_UPDATE_DELAYED()
 	self:UpdateItems()
 end
 
-local lastSpec -- DEPRECATED
 function Talentless:PLAYER_SPECIALIZATION_CHANGED()
-	if(not PTR) then -- DEPRECATED
-		local spec = GetSpecialization()
-		if(lastSpec and lastSpec ~= spec) then
-			local setName = TalentlessDB[spec]
-			if(setName) then
-				for index = 1, GetNumEquipmentSets() do
-					local name = GetEquipmentSetInfo(index)
-					if(name == setName) then
-						EquipmentManager_EquipSet(name)
-						break
-					end
-				end
-			end
-		end
-
-		lastSpec = spec
-	end
-
 	if(self.Specs) then
 		local spec = GetSpecialization()
 		for index, Button in next, self.Specs do
@@ -74,36 +53,15 @@ function Talentless:PLAYER_SPECIALIZATION_CHANGED()
 end
 
 function Talentless:EQUIPMENT_SETS_CHANGED()
-	if(PTR) then
-		-- wish we had API for spec > setID as well, not just setID > spec
-		for _, Button in next, self.Specs do
-			Button.Set:Hide()
-		end
+	-- wish we had API for spec > setID as well, not just setID > spec
+	for _, Button in next, self.Specs do
+		Button.Set:Hide()
+	end
 
-		for _, setID in next, C_EquipmentSet.GetEquipmentSetIDs() do
-			local Button = self.Specs[C_EquipmentSet.GetEquipmentSetAssignedSpec(setID)]
-			Button.SetIcon:SetTexture(select(2, C_EquipmentSet.GetEquipmentSetInfo(setID)) or QUESTION_MARK_ICON)
-			Button.Set:Show()
-		end
-	else
-		-- DEPRECATED
-		for index, Button in next, self.Specs do
-			local setExists
-
-			local savedName = TalentlessDB[index]
-			if(savedName) then
-				for index = 1, GetNumEquipmentSets() do
-					local name, icon = GetEquipmentSetInfo(index)
-					if(name == savedName) then
-						setExists = true
-						Button.SetIcon:SetTexture(icon or [[Interface\Icons\INV_MISC_QUESTIONMARK]])
-						break
-					end
-				end
-			end
-
-			Button.Set:SetShown(setExists)
-		end
+	for _, setID in next, C_EquipmentSet.GetEquipmentSetIDs() do
+		local Button = self.Specs[C_EquipmentSet.GetEquipmentSetAssignedSpec(setID)]
+		Button.SetIcon:SetTexture(select(2, C_EquipmentSet.GetEquipmentSetInfo(setID)) or QUESTION_MARK_ICON)
+		Button.Set:Show()
 	end
 end
 
@@ -277,13 +235,8 @@ function Talentless:CreateItemButtons()
 end
 
 function Talentless:CreateDropdown()
-	local OnClick = function(self, nameOrSetID, spec) -- DEPRECATED
-		if(PTR) then
-			C_EquipmentSet.AssignSpecToEquipmentSet(nameOrSetID, spec)
-		else
-			TalentlessDB[spec] = nameOrSetID
-		end
-
+	local OnClick = function(self, setID, spec)
+		C_EquipmentSet.AssignSpecToEquipmentSet(setID, spec)
 		Talentless:EQUIPMENT_SETS_CHANGED()
 	end
 
@@ -293,26 +246,14 @@ function Talentless:CreateDropdown()
 	self.initialize = function()
 		local info = Talentless_UIDropDownMenu_CreateInfo()
 
-		if(PTR) then
-			for _, setID in next, C_EquipmentSet.GetEquipmentSetIDs() do
-				local name, icon = C_EquipmentSet.GetEquipmentSetInfo(setID)
-				info.text = string.format('|T%s:18|t %s', icon or QUESTION_MARK_ICON, name)
-				info.func = OnClick
-				info.arg1 = setID
-				info.arg2 = Talentless_UIDROPDOWNMENU_MENU_VALUE
-				info.checked = C_EquipmentSet.GetEquipmentSetAssignedSpec(setID) == info.arg2
-				Talentless_UIDropDownMenu_AddButton(info)
-			end
-		else -- DEPRECATED
-			for index = 1, GetNumEquipmentSets() do
-				local name, icon = GetEquipmentSetInfo(index)
-				info.text = string.format('|T%s:18|t %s', icon or [[Interface\Icons\INV_MISC_QUESTIONMARK]], name)
-				info.func = OnClick
-				info.arg1 = name
-				info.arg2 = Talentless_UIDROPDOWNMENU_MENU_VALUE
-				info.checked = TalentlessDB[info.arg2] == name
-				Talentless_UIDropDownMenu_AddButton(info)
-			end
+		for _, setID in next, C_EquipmentSet.GetEquipmentSetIDs() do
+			local name, icon = C_EquipmentSet.GetEquipmentSetInfo(setID)
+			info.text = string.format('|T%s:18|t %s', icon or QUESTION_MARK_ICON, name)
+			info.func = OnClick
+			info.arg1 = setID
+			info.arg2 = Talentless_UIDROPDOWNMENU_MENU_VALUE
+			info.checked = C_EquipmentSet.GetEquipmentSetAssignedSpec(setID) == info.arg2
+			Talentless_UIDropDownMenu_AddButton(info)
 		end
 
 		info.text = KEY_NUMLOCK_MAC -- "Clear"
@@ -390,11 +331,9 @@ function Talentless:ADDON_LOADED(addon)
 		self:CreateSpecButtons()
 		self:CreateDropdown()
 
-		if(PTR) then
-			-- We need an event for this
-			hooksecurefunc(C_EquipmentSet, 'AssignSpecToEquipmentSet', UpdateAssignedEquipmentSets)
-			hooksecurefunc(C_EquipmentSet, 'UnassignEquipmentSetSpec', UpdateAssignedEquipmentSets)
-		end
+		-- We need an event for this
+		hooksecurefunc(C_EquipmentSet, 'AssignSpecToEquipmentSet', UpdateAssignedEquipmentSets)
+		hooksecurefunc(C_EquipmentSet, 'UnassignEquipmentSetSpec', UpdateAssignedEquipmentSets)
 
 		if(UnitLevel('player') < 110 and not (IsTrialAccount() or IsVeteranTrialAccount())) then
 			self:RegisterEvent('PLAYER_LEVEL_UP')
@@ -402,10 +341,6 @@ function Talentless:ADDON_LOADED(addon)
 
 		self:UnregisterEvent('ADDON_LOADED')
 		self:OnShow()
-	elseif(addon == self:GetName()) then
-		if(not PTR) then
-			TalentlessDB = TalentlessDB or {}
-		end
 	end
 end
 

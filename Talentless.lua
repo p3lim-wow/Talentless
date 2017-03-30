@@ -99,6 +99,8 @@ function Talentless:CreateSpecButtons()
 	local OnEnter = function(self)
 		GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
 		GameTooltip:AddLine(select(2, GetSpecializationInfo(self:GetID())))
+		GameTooltip:AddLine(' ')
+		GameTooltip:AddLine(string.format('|cff33ff33%s|r - %s', HELPFRAME_REPORT_PLAYER_RIGHT_CLICK, EQUIPMENT_MANAGER))
 		GameTooltip:Show()
 	end
 

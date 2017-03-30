@@ -1,3 +1,9 @@
+### Changes in 70200.9-Release:
+
+- Changed: Update Interface version
+- Fixed: Some errors
+- Removed: 7.1.5 compatibility
+
 ### Changes in 70100.8-Release:
 
 - Added: Support for the character-bound tomes from "In the Blink of an Eye"

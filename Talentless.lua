@@ -59,9 +59,11 @@ function Talentless:EQUIPMENT_SETS_CHANGED()
 	end
 
 	for _, setID in next, C_EquipmentSet.GetEquipmentSetIDs() do
-		local Button = self.Specs[C_EquipmentSet.GetEquipmentSetAssignedSpec(setID)]
-		Button.SetIcon:SetTexture(select(2, C_EquipmentSet.GetEquipmentSetInfo(setID)) or QUESTION_MARK_ICON)
-		Button.Set:Show()
+		if(Button) then
+			local Button = self.Specs[C_EquipmentSet.GetEquipmentSetAssignedSpec(setID)]
+			Button.SetIcon:SetTexture(select(2, C_EquipmentSet.GetEquipmentSetInfo(setID)) or QUESTION_MARK_ICON)
+			Button.Set:Show()
+		end
 	end
 end
 
@@ -157,9 +159,11 @@ function Talentless:CreateItemButtons()
 	self.Items = {}
 
 	local OnEnter = function(self)
-		GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
-		GameTooltip:SetItemByID(self.itemID)
-		GameTooltip:Show()
+		if(self.itemID) then
+			GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
+			GameTooltip:SetItemByID(self.itemID)
+			GameTooltip:Show()
+		end
 	end
 
 	local OnEvent = function(self, event)

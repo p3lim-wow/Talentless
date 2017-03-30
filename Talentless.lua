@@ -242,7 +242,12 @@ end
 
 function Talentless:CreateDropdown()
 	local OnClick = function(self, setID, spec)
-		C_EquipmentSet.AssignSpecToEquipmentSet(setID, spec)
+		if(setID) then
+			C_EquipmentSet.AssignSpecToEquipmentSet(setID, spec)
+		else
+			C_EquipmentSet.UnassignEquipmentSetSpec(C_EquipmentSet.GetEquipmentSetForSpec(spec))
+		end
+
 		Talentless:EQUIPMENT_SETS_CHANGED()
 	end
 

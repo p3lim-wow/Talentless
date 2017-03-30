@@ -1,3 +1,9 @@
+### Changes in 70200.10-Release:
+
+- Added: Helpful tooltip on spec buttons
+- Fixed: Clearing a spec assignment
+- Fixed: Icons not showing up
+
 ### Changes in 70200.9-Release:
 
 - Changed: Update Interface version

@@ -4,7 +4,11 @@
 ## Title: Talentless
 ## Notes: Improvements the talent UI and auto-equipping sets per specialization
 ## SavedVariablesPerCharacter: TalentlessDB
+## OptionalDeps: LibDropDown
 
-UIDropDownMenu\UIDropDownMenu.xml
+#@do-not-package@
+..\LibDropDown\embed.xml
+#@end-do-not-package@
 
+libs\LibDropDown\embex.xml
 Talentless.lua

@@ -1,9 +1,12 @@
-local Talentless = CreateFrame('Frame', (...), UIParent, 'Talentless_UIDropDownMenuTemplate')
+local Talentless = CreateFrame('Frame', (...), UIParent)
 Talentless:RegisterEvent('ADDON_LOADED')
 Talentless:RegisterUnitEvent('PLAYER_SPECIALIZATION_CHANGED', 'player')
 Talentless:SetScript('OnEvent', function(self, event, ...)
 	self[event](self, ...)
 end)
+
+local Dropdown = LibDropDown:CreateMenu(Talentless)
+Dropdown:SetStyle('MENU')
 
 function Talentless:PLAYER_LEVEL_UP(level)
 	if(level == 101) then
@@ -89,8 +92,9 @@ function Talentless:CreateSpecButtons()
 		self:SetChecked(GetSpecialization() == index)
 
 		if(button == 'RightButton') then
-			Talentless_CloseDropDownMenus()
-			Talentless_ToggleDropDownMenu(1, index, Talentless, self, -self:GetWidth(), -self:GetHeight())
+			Talentless:UpdateDropdown(index)
+			Dropdown:SetAnchor('TOPLEFT', self, 'BOTTOMLEFT', 10, -10)
+			Dropdown:Toggle()
 		else
 			Talentless:SetSpecialization(index)
 		end
@@ -240,38 +244,32 @@ function Talentless:CreateItemButtons()
 	end
 end
 
-function Talentless:CreateDropdown()
-	local OnClick = function(self, setID, spec)
-		if(setID) then
-			C_EquipmentSet.AssignSpecToEquipmentSet(setID, spec)
-		else
-			C_EquipmentSet.UnassignEquipmentSetSpec(C_EquipmentSet.GetEquipmentSetForSpec(spec))
-		end
-
-		Talentless:EQUIPMENT_SETS_CHANGED()
+local function OnMenuClick(self, setID, spec)
+	if(setID) then
+		C_EquipmentSet.AssignSpecToEquipmentSet(setID, spec)
+	else
+		C_EquipmentSet.UnassignEquipmentSetSpec(C_EquipmentSet.GetEquipmentSetForSpec(spec))
 	end
 
-	self.relativePoint = 'TOPRIGHT'
-	self.displayMode = 'MENU'
+	Talentless:EQUIPMENT_SETS_CHANGED()
+end
 
-	self.initialize = function()
-		local info = Talentless_UIDropDownMenu_CreateInfo()
+function Talentless:UpdateDropdown(spec)
+	Dropdown:ClearLines()
 
-		for _, setID in next, C_EquipmentSet.GetEquipmentSetIDs() do
-			local name, icon = C_EquipmentSet.GetEquipmentSetInfo(setID)
-			info.text = string.format('|T%s:18|t %s', icon or QUESTION_MARK_ICON, name)
-			info.func = OnClick
-			info.arg1 = setID
-			info.arg2 = Talentless_UIDROPDOWNMENU_MENU_VALUE
-			info.checked = C_EquipmentSet.GetEquipmentSetAssignedSpec(setID) == info.arg2
-			Talentless_UIDropDownMenu_AddButton(info)
-		end
-
-		info.text = KEY_NUMLOCK_MAC -- "Clear"
-		info.arg1 = nil
-		info.checked = false
-		Talentless_UIDropDownMenu_AddButton(info)
+	local info = {func = OnMenuClick}
+	for _, setID in next, C_EquipmentSet.GetEquipmentSetIDs() do
+		local name, icon = C_EquipmentSet.GetEquipmentSetInfo(setID)
+		info.text = string.format('|T%s:18|t %s', icon or QUESTION_MARK_ICON, name)
+		info.args = {setID, spec}
+		info.checked = C_EquipmentSet.GetEquipmentSetAssignedSpec(setID) == spec
+		Dropdown:AddLine(info)
 	end
+
+	info.text = KEY_NUMLOCK_MAC -- "Clear"
+	info.args[1] = nil
+	info.checked = false
+	Dropdown:AddLine(info)
 end
 
 function Talentless:GetAvailableItemInfo(index)
@@ -340,7 +338,6 @@ function Talentless:ADDON_LOADED(addon)
 
 		self:CreateItemButtons()
 		self:CreateSpecButtons()
-		self:CreateDropdown()
 
 		-- We need an event for this
 		hooksecurefunc(C_EquipmentSet, 'AssignSpecToEquipmentSet', UpdateAssignedEquipmentSets)

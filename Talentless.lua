@@ -244,7 +244,7 @@ function Talentless:CreateItemButtons()
 	end
 end
 
-local function OnMenuClick(self, setID, spec)
+local function OnMenuClick(_, _, setID, spec)
 	if(setID) then
 		C_EquipmentSet.AssignSpecToEquipmentSet(setID, spec)
 	else

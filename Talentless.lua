@@ -267,7 +267,7 @@ function Talentless:UpdateDropdown(spec)
 	end
 
 	info.text = KEY_NUMLOCK_MAC -- "Clear"
-	info.args[1] = nil
+	info.args = {nil, spec}
 	info.checked = false
 	Dropdown:AddLine(info)
 end

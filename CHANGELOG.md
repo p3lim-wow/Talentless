@@ -1,3 +1,7 @@
+### Changes in 70300.12-Release:
+
+- Changed: Update LibDropDown embed
+
 ### Changes in 70300.11-Release:
 
 - Changed: Update Interface version

@@ -1,3 +1,8 @@
+### Changes in 70300.11-Release:
+
+- Changed: Update Interface version
+- Changed: Using a new library for dropdowns
+
 ### Changes in 70200.10-Release:
 
 - Added: Helpful tooltip on spec buttons

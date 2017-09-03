@@ -5,7 +5,7 @@ Talentless:SetScript('OnEvent', function(self, event, ...)
 	self[event](self, ...)
 end)
 
-local Dropdown = LibDropDown:CreateMenu(Talentless)
+local Dropdown = LibStub('LibDropDown'):NewMenu(Talentless)
 Dropdown:SetStyle('MENU')
 
 function Talentless:PLAYER_LEVEL_UP(level)

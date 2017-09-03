@@ -3,6 +3,7 @@ package-as: Talentless
 enable-nolib-creation: no
 
 externals:
+  libs/LibStub: svn://svn.wowace.com/wow/libstub/mainline/tags/1.0
   libs/LibDropDown: https://github.com/p3lim-wow/LibDropDown
 
 manual-changelog:

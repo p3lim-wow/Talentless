@@ -1,3 +1,8 @@
+### Changes in 70300.13-Release:
+
+- Changed: Update LibDropDown embed
+- Fixed: LibDropDown not loading properly
+
 ### Changes in 70300.12-Release:
 
 - Changed: Update LibDropDown embed

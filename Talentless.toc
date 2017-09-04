@@ -6,6 +6,9 @@
 ## SavedVariablesPerCharacter: TalentlessDB
 ## OptionalDeps: LibStub, LibDropDown
 
+## X-Curse-Project-ID: 102216
+## X-WoWI-ID: 19184
+
 #@do-not-package@
 ..\LibStub\LibStub.lua
 ..\LibDropDown\embed.xml

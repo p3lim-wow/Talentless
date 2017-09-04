@@ -1,3 +1,7 @@
+### Changes in 70300.15-Release:
+
+- Changed: Nothing, using a different packager than CurseForge's
+
 ### Changes in 70300.14-Release:
 
 - Changed: Nothing, the CurseForge packager messed up

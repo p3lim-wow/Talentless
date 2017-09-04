@@ -1,3 +1,7 @@
+### Changes in 70300.14-Release:
+
+- Changed: Nothing, the CurseForge packager messed up
+
 ### Changes in 70300.13-Release:
 
 - Changed: Update LibDropDown embed

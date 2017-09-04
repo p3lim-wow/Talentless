@@ -1,6 +1,11 @@
 sudo: false
 language: c
 
+addons:
+  apt:
+    packages:
+      - pandoc
+
 branches:
   only:
   - /^\d+\.\d+(\.\d+)?(-\S*)?$/

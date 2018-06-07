@@ -9,11 +9,6 @@
 ## X-Curse-Project-ID: 102216
 ## X-WoWI-ID: 19184
 
-#@do-not-package@
-..\LibStub\LibStub.lua
-..\LibDropDown\embed.xml
-#@end-do-not-package@
-
 libs\LibStub\LibStub.lua
 libs\LibDropDown\embed.xml
 

@@ -1,3 +1,5 @@
+local BfA = select(4, GetBuildInfo()) >= 80000
+
 local Talentless = CreateFrame('Frame', (...), UIParent)
 Talentless:RegisterEvent('ADDON_LOADED')
 Talentless:RegisterUnitEvent('PLAYER_SPECIALIZATION_CHANGED', 'player')
@@ -26,7 +28,19 @@ function Talentless:UNIT_AURA()
 		for _, Button in next, self.Items do
 			local itemName = Button.itemName
 			if(itemName) then
-				local exists, _, _, _, _, duration, expiration = UnitAura('player', itemName)
+				local exists, name, duration, expiration, _
+				for index = 1, 40 do
+					if(BfA) then
+						name, _, _, _, duration, expiration = UnitAura('player', index)
+					else
+						name, _, _, _, _, duration, expiration = UnitAura('player', index)
+					end
+					exists = name == itemName
+					if(not name or exists) then
+						break
+					end
+				end
+
 				if(exists) then
 					if(expiration > 0) then
 						Button.Cooldown:SetCooldown(expiration - duration, duration)
@@ -198,6 +212,10 @@ function Talentless:CreateItemButtons()
 		}
 	}
 
+	if(BfA) then
+		items[2][3] = 143780
+	end
+
 	local playerLevel = UnitLevel('player')
 	if(playerLevel > 100) then
 		table.remove(items[1], 1)
@@ -207,9 +225,12 @@ function Talentless:CreateItemButtons()
 		end
 	end
 
+
+	local OFFSET = BfA and 140 or 10
+
 	for index, items in next, items do
 		local Button = CreateFrame('Button', '$parentItemButton' .. index, self, 'SecureActionButtonTemplate, ActionBarButtonSpellActivationAlert')
-		Button:SetPoint('TOPRIGHT', PlayerTalentFrame, -10 - (40 * (index - 1)), -25)
+		Button:SetPoint('TOPRIGHT', PlayerTalentFrame, -OFFSET - (40 * (index - 1)), -25)
 		Button:SetSize(34, 34)
 		Button:SetAttribute('type', 'item')
 		Button:SetScript('OnEnter', OnEnter)

@@ -1,9 +1,9 @@
 package-as: Talentless
 
-enable-nolib-creation: no
-
 externals:
-  libs/LibStub: https://repos.wowace.com/wow/libstub/trunk
+  libs/LibStub:
+    url: https://repos.wowace.com/wow/libstub/trunk
+    tag: 1.0
   libs/LibDropDown:
     url: https://github.com/p3lim-wow/LibDropDown
     tag: latest

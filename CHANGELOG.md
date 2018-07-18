@@ -1,3 +1,8 @@
+### Changes in 80000.16-Release:
+
+- Changed: Update Interface version
+- Fixed: Compatibility with Battle for Azeroth
+
 ### Changes in 70300.15-Release:
 
 - Changed: Nothing, using a different packager than CurseForge's

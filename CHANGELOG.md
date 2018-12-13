@@ -1,3 +1,7 @@
+### Changes in 80000.17-Release:
+
+- Added: Support for BfA tome and codex
+
 ### Changes in 80000.16-Release:
 
 - Changed: Update Interface version

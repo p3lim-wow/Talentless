@@ -100,9 +100,11 @@ function Talentless:CreateSpecButtons()
 		self:SetChecked(GetSpecialization() == index)
 
 		if(button == 'RightButton') then
-			Talentless:UpdateDropdown(index)
-			Dropdown:SetAnchor('TOPLEFT', self, 'BOTTOMLEFT', 10, -10)
-			Dropdown:Toggle()
+			if(C_EquipmentSet.GetNumEquipmentSets() > 0) then
+				Talentless:UpdateDropdown(index)
+				Dropdown:SetAnchor('TOPLEFT', self, 'BOTTOMLEFT', 10, -10)
+				Dropdown:Toggle()
+			end
 		else
 			Talentless:SetSpecialization(index)
 		end

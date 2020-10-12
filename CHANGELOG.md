@@ -1,3 +1,9 @@
+### Changes in 90000.18-Release:
+
+- Changed: Don't show dropdowns when there are no equipment sets
+- Changed: Update Interface version
+- Removed: Bindings for opening specific tabs (would break entire Talent UI)
+
 ### Changes in 80000.17-Release:
 
 - Added: Support for BfA tome and codex

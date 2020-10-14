@@ -1,3 +1,7 @@
+### Changes in 90000.19-Release:
+
+- Fixed: Incorrect Interface version
+
 ### Changes in 90000.18-Release:
 
 - Changed: Don't show dropdowns when there are no equipment sets

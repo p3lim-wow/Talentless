@@ -229,6 +229,7 @@ function Talentless:CreateItemButtons()
 		Icon:SetAllPoints()
 		Icon:SetTexture(index == 1 and 1495827 or 134915)
 		Icon:SetTexCoord(4/64, 60/64, 4/64, 60/64)
+		Button.Icon = Icon
 
 		local Normal = Button:CreateTexture('$parentNormalTexture')
 		Normal:SetPoint('CENTER')
@@ -319,6 +320,7 @@ function Talentless:UpdateItems()
 			end
 		end
 
+		Button.Icon:SetTexture(C_Item.GetItemIconByID(itemID))
 		Button.Count:SetText(itemCount)
 	end
 

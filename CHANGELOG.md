@@ -1,3 +1,10 @@
+### Changes in 90000.20-Release:
+
+- Added: Support for new tomes and codices in Shadowlands
+- Changed: Tomes and codices now use their correct icons
+- Changed: Update Interface version
+- Fixed: Support for older tomes and codices
+
 ### Changes in 90000.19-Release:
 
 - Fixed: Incorrect Interface version

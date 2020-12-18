@@ -9,10 +9,12 @@ local Dropdown = LibStub('LibDropDown'):NewMenu(Talentless)
 Dropdown:SetStyle('MENU')
 
 function Talentless:PLAYER_LEVEL_UP(level)
-	if(level == 101) then
-		table.remove(self.Items[1].items, 1)
-	elseif(level == 110) then
-		table.remove(self.Items[2].items, 1)
+	local maxLevel = GetRestrictedAccountData()
+	if(maxLevel == 0) then
+		maxLevel = GetMaxLevelForPlayerExpansion()
+	end
+
+	if(UnitLevel('player') == maxLevel) then
 		self:UnregisterEvent('PLAYER_LEVEL_UP')
 	end
 
@@ -199,27 +201,21 @@ function Talentless:CreateItemButtons()
 
 	local items = {
 		{
-			141641, -- Codex of the Clear Mind (Pre-Legion)
-			141333, -- Codex of the Tranquil Mind (Legion)
-			153646, -- Codex of the Quiet Mind (BfA)
+			{itemID = 143780, min = 10, max = 50},  -- Tome of the Tranquil Mind (BoP version)
+			{itemID = 143785, min = 10, max = 50},  -- Tome of the Tranquil Mind (BoP version)
+			{itemID = 141446, min = 10, max = 50},  -- Tome of the Tranquil Mind
+			{itemID = 141640, min = 10, max = 50},  -- Tome of the Clear Mind
+			{itemID = 153647, min = 10, max = 59},  -- Tome of the Quiet Mind
+			{itemID = 173049, min = 51, max = 999}, -- Tome of the Still Mind
 		}, {
-			141640, -- Tome of the Clear Mind (Pre-Legion)
-			143785, -- Tome of the Tranquil Mind (BoP version)
-			141446, -- Tome of the Tranquil Mind (Legion)
-			153647, -- Tome of the Quiet Mind (BfA)
+			{itemID = 141333, min = 10, max = 50},  -- Codex of the Tranquil Mind
+			{itemID = 141641, min = 10, max = 50},  -- Codex of the Clear Mind
+			{itemID = 153646, min = 10, max = 59},  -- Codex of the Quiet Mind
+			{itemID = 173048, min = 51, max = 999}, -- Codex of the Still Mind
 		}
 	}
 
-	local playerLevel = UnitLevel('player')
-	if(playerLevel > 100) then
-		table.remove(items[1], 1)
-
-		if(playerLevel > 109) then
-			table.remove(items[2], 1)
-		end
-	end
-
-	for index, items in next, items do
+	for index, info in next, items do
 		local Button = CreateFrame('Button', '$parentItemButton' .. index, self, 'SecureActionButtonTemplate, ActionBarButtonSpellActivationAlert')
 		Button:SetPoint('TOPRIGHT', PlayerTalentFrame, -140 - (40 * (index - 1)), -25)
 		Button:SetSize(34, 34)
@@ -227,7 +223,7 @@ function Talentless:CreateItemButtons()
 		Button:SetScript('OnEnter', OnEnter)
 		Button:SetScript('OnEvent', OnEvent)
 		Button:SetScript('OnLeave', GameTooltip_Hide)
-		Button.items = items
+		Button.items = info
 
 		local Icon = Button:CreateTexture('$parentIcon', 'BACKGROUND')
 		Icon:SetAllPoints()
@@ -285,14 +281,21 @@ function Talentless:UpdateDropdown(spec)
 end
 
 function Talentless:GetAvailableItemInfo(index)
-	for _, itemID in next, self.Items[index].items do
-		local itemCount = GetItemCount(itemID)
-		if(itemCount > 0) then
-			return itemID, itemCount
+	local playerLevel = UnitLevel('player')
+	local bestItemID
+
+	for _, info in next, self.Items[index].items do
+		if(playerLevel >= info.min and playerLevel <= info.max) then
+			local itemCount = GetItemCount(info.itemID)
+			if(itemCount > 0) then
+				return info.itemID, itemCount
+			else
+				bestItemID = info.itemID
+			end
 		end
 	end
 
-	return self.Items[index].items[1], 0
+	return bestItemID, 0
 end
 
 function Talentless:UpdateItems()
@@ -355,7 +358,12 @@ function Talentless:ADDON_LOADED(addon)
 		hooksecurefunc(C_EquipmentSet, 'AssignSpecToEquipmentSet', UpdateAssignedEquipmentSets)
 		hooksecurefunc(C_EquipmentSet, 'UnassignEquipmentSetSpec', UpdateAssignedEquipmentSets)
 
-		if(UnitLevel('player') < 110 and not (IsTrialAccount() or IsVeteranTrialAccount())) then
+		local maxLevel = GetRestrictedAccountData()
+		if(maxLevel == 0) then
+			maxLevel = GetMaxLevelForPlayerExpansion()
+		end
+
+		if(UnitLevel('player') < maxLevel) then
 			self:RegisterEvent('PLAYER_LEVEL_UP')
 		end
 

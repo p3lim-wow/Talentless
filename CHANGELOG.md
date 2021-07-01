@@ -1,3 +1,7 @@
+### Changes in 90100.21-Release:
+
+- Changed: Update Interface version
+
 ### Changes in 90000.20-Release:
 
 - Added: Support for new tomes and codices in Shadowlands

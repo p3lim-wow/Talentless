@@ -1,7 +1,12 @@
 # Talentless
 
 This is an addon for the popular MMORPG "World of Warcraft".  
-It can be downloaded at [CurseForge](https://www.curseforge.com/wow/addons/talentless) or at [WoWInterface](https://wowinterface.com/downloads/info19184).
+It can be downloaded at one of the following sites:
+
+- [Curse](https://www.curseforge.com/wow/addons/talentless)
+- [WoWInterface](https://wowinterface.com/downloads/info19184)
+- [Wago](https://addons.wago.io/addons/talentless)
+- [GitHub](https://github.com/p3lim-wow/Talentless/releases)
 
 ## Description
 

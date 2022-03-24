@@ -10,7 +10,9 @@
 ## X-WoWI-ID: 19184
 ## X-Wago-ID: RqGZ8X6d
 
-libs\LibStub\LibStub.lua
-libs\LibDropDown\embed.xml
+#@non-debug@
+# libs\LibStub\LibStub.lua
+# libs\LibDropDown\embed.xml
+#@end-non-debug@
 
 Talentless.lua

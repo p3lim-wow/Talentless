@@ -23,20 +23,25 @@ function Talentless:PLAYER_LEVEL_UP(level)
 	end
 end
 
+local tomeBuffID = {
+	[143780] = 227041, -- Tome of the Tranquil Mind (BoP version)
+	[143785] = 227041, -- Tome of the Tranquil Mind (BoP version)
+	[141446] = 227041, -- Tome of the Tranquil Mind
+	[141640] = 227563, -- Tome of the Clear Mind
+	[153647] = 256231, -- Tome of the Quiet Mind
+	[173049] = 321923, -- Tome of the Still Mind
+	[141333] = 226234, -- Codex of the Tranquil Mind
+	[141641] = 227565, -- Codex of the Clear Mind
+	[153646] = 256229, -- Codex of the Quiet Mind
+	[173048] = 324028, -- Codex of the Still Mind
+}
+
 function Talentless:UNIT_AURA()
 	if(self:IsShown()) then
 		for _, Button in next, self.Items do
 			local itemName = Button.itemName
 			if(itemName) then
-				local exists, name, duration, expiration, _
-				for index = 1, 40 do
-					name, _, _, _, duration, expiration = UnitAura('player', index)
-					exists = name == itemName
-					if(not name or exists) then
-						break
-					end
-				end
-
+				local exists, _, _, _, duration, expiration = GetPlayerAuraBySpellID(tomeBuffID[Button.itemID])
 				if(exists) then
 					if(expiration > 0) then
 						Button.Cooldown:SetCooldown(expiration - duration, duration)
